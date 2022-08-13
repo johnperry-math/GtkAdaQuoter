@@ -1,0 +1,20 @@
+with "gtkada";
+with "../JsonQuoter/json_quoter.gpr";
+
+project GtkAdaQuoter is
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Main use ("main.adb");
+
+   package Compiler is
+      for Switches ("ada") use ("-gnat2022");
+   end Compiler;
+
+   package Ide is
+      for Vcs_Kind use "git";
+      for Vcs_Repository_Root use ".";
+   end Ide;
+
+end GtkAdaQuoter;
+
