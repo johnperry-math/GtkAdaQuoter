@@ -98,9 +98,16 @@ begin
    Gtk_New(Tree_View);
    Gtk_New(List_Store, ( 0..3 => Glib.GType_String ));
    Scroll_Box.Add(Tree_View);
+
    Save_Button.On_Button_Release_Event(Call  => Save_Quotes_Cb'Access,
                                        Slot  => List_Store,
                                        After => False);
+   Add_Button.On_Button_Release_Event(Call  => Add_Quote_Cb'Access,
+                                      Slot  => Tree_View,
+                                      After => False);
+   Del_Button.On_Button_Release_Event(Call  => Del_Quote_Cb'Access,
+                                      Slot  => Tree_View,
+                                      After => False);
 
    declare
 

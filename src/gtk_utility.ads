@@ -33,4 +33,14 @@ package Gtk_Utility is
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean;
 
+   function Add_Quote_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean;
+
+   function Del_Quote_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean;
+
 end Gtk_Utility;

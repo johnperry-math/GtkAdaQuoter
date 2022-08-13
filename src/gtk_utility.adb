@@ -132,4 +132,45 @@ package body Gtk_Utility is
       return True;
    end Save_Quotes_Cb;
 
+   procedure Get_Store_And_Iter
+      (View  : Gtk_Tree_View;
+       Store : out Gtk_List_Store;
+       Iter  : out Gtk_Tree_Iter
+      )
+   is
+      Model   : Gtk_Tree_Model := View.Get_Model;
+      Path    : Gtk_Tree_Path;
+      Column  : Gtk_Tree_View_Column;
+   begin
+      Store := Gtk_List_Store(To_Object(Model));
+      View.Get_Cursor(Path, Column);
+      Iter := Get_Iter(Model, Path);
+   end Get_Store_And_Iter;
+
+   function Add_Quote_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean
+   is
+      Store         : Gtk_List_Store;
+      Iter, Sibling : Gtk_Tree_Iter;
+   begin
+      Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Sibling);
+      Store.Insert_After(Iter, Sibling);
+      return True;
+   end Add_Quote_Cb;
+
+   function Del_Quote_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean
+   is
+      Store : Gtk_List_Store;
+      Iter  : Gtk_Tree_Iter;
+   begin
+      Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Iter);
+      Store.Remove(Iter);
+      return True;
+   end Del_Quote_Cb;
+
 end Gtk_Utility;
