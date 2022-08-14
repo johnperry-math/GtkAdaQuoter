@@ -1,9 +1,10 @@
 -- Ada packages
 with Ada.Text_IO;
 with Ada.Containers.Vectors;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 -- Gdk packages (gdk is a low-level API for gtk)
-with Gdk.Event;            use Gdk.Event;
+with Gdk.Event;              use Gdk.Event;
 
 -- Gtk packages
 with Gtk.Box;                use Gtk.Box;
@@ -35,27 +36,80 @@ with Gtkada.Types;
 
 -- my packages
 with Quote_Structure;
-with Gtk_Utility;     use Gtk_Utility;
+with Callbacks;     use Callbacks;
 
 procedure Main is
 
-   Win        : Gtk_Window;
-   Scroll_Box : Gtk_Scrolled_Window;
-   HBox, VBox : Gtk_Table;
+   -- containers
 
-   Add_Button, Del_Button, Save_Button
-                 : Gtk_Button;
-   Add_Label, Del_Label, Save_Label
-                 : Gtk_Label;
+   Win        : Gtk_Window;
+   -- the main window
+   Scroll_Box : Gtk_Scrolled_Window;
+   -- a scrollbox to contain the tree view
+   VBox       : Gtk_Table;
+   -- vertical box containing the tree view and the button bar
+
+   -- the tree view and its storage
 
    Tree_View  : Gtk_Tree_View;
+   -- the tree view that presents the data
    List_Store : Gtk_List_Store;
+   -- the data the tree view presents
+
+   -- buttons
+
+   Button_Bar : Gtk_Table;
+   -- horizontal box containing the buttons
+   Add_Button, Del_Button, Save_Button : Gtk_Button;
+   -- button whose name implies its meaning
+   Add_Label, Del_Label, Save_Label : Gtk_Label;
+   -- label for the corresponding button
+
+   -- the quotes
 
    All_Quotes: Quote_Structure.Quote_Vector;
    use all type Quote_Structure.Quote_Vector;
    use all type Quote_Structure.Quote;
 
+   type Fields is ( Author, Speaker, Source, Quotation );
+   Field_Names: array (Fields) of Ada.Strings.Unbounded.Unbounded_String
+      := (To_Unbounded_String("Author"),
+          To_Unbounded_String("Speaker"),
+          To_Unbounded_String("Source"),
+          To_Unbounded_String("Quotation")
+         );
+
    Dummy: Glib.Gint;
+   -- a dummy variable needed for an unused return value
+
+   procedure Setup_Column(Field: Fields) is
+   -- title the columns and make them editable
+
+      Column_No: Glib.Gint;
+      Column   : Gtk_Tree_View_Column;
+      Text     : Gtk_Cell_Renderer_Text;
+      use all type Glib.Gint;
+
+   begin
+
+      -- column text
+      Gtk_New(Text);
+      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
+      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
+
+      -- column: title, pack text into it, attribute, resizable, sortable
+      Gtk_New(Column);
+      Column.Set_Title(To_String(Field_Names(Field)));
+      Column.Pack_Start(Text, True);
+      Column.Add_Attribute(Text, "text", Fields'Pos(Field));
+      Column.Set_Resizable(True);
+      Column.Set_Sort_Column_Id(Fields'Pos(Field));
+
+      -- finally, add it to the tree view
+      -- interestingly, column number might differ from sort id above
+      Column_No := Tree_View.Append_Column(Column);
+
+   end Setup_Column;
 
 begin
 
@@ -68,19 +122,18 @@ begin
    Gtk_New (Win);
    Win.Set_Default_Size (400, 400);
 
-   -- Create a box to organize vertically the contents of the window
-   -- 10 rows, 1 column, differently-sized cells
+   -- Create a box for vertical organization of the window contents:
+   -- 10 rows, 1 column, different-sized cells
    VBox := Gtk_Table_New(10, 1, False);
    Win.Add(VBox);
    Gtk_New(Scroll_Box);
    VBox.Attach(Scroll_Box, 0, 1, 0, 8, Expand + Fill, Expand + Fill, 0, 0);
 
    -- A horizontally-flowing box in position (0,9) - (1,10)
-   --  Gtk_New_Hbox(HBox);
-   HBox := Gtk_Table_New(1, 5, True);
-   VBox.Attach (HBox, 0, 1, 9, 10, Expand, Shrink, 0, 0);
+   Button_Bar := Gtk_Table_New(1, 5, True);
+   VBox.Attach (Button_Bar, 0, 1, 9, 10, Expand, Shrink, 0, 0);
 
-   -- Buttons for the HBox: Add Quote, Delete Quote, Save Quotes
+   -- Buttons for the Button_Bar: Add Quote, Delete Quote, Save Quotes
    Gtk_New(Add_Button);
    Gtk_New(Add_Label); Set_Label(Add_Label, "Add Quote"); Add_Button.Add(Add_Label);
    Gtk_New(Del_Button);
@@ -88,119 +141,86 @@ begin
    Gtk_New(Save_Button);
    Gtk_New(Save_Label); Set_Label(Save_Label, "Save Quotes"); Save_Button.Add(Save_Label);
 
-   HBox.Attach(Add_Button, 1, 2, 0, 1, Shrink, Shrink, 0, 0);
-   HBox.Attach(Del_Button, 2, 3, 0, 1, Shrink, Shrink, 0, 0);
-   HBox.Attach(Save_Button, 4, 5, 0, 1, Shrink, Shrink, 0, 0);
-   Set_VExpand(HBox, False);
-   Set_Size_Request(HBox, 40, 20);
+   Button_Bar.Attach(Add_Button, 1, 2, 0, 1, Shrink, Shrink, 0, 0);
+   Button_Bar.Attach(Del_Button, 2, 3, 0, 1, Shrink, Shrink, 0, 0);
+   Button_Bar.Attach(Save_Button, 4, 5, 0, 1, Shrink, Shrink, 0, 0);
+   Set_VExpand(Button_Bar, False);
+   Set_Size_Request(Button_Bar, 40, 20);
 
    -- Iniitalize a tree view with its backing storage of 3 columns (0..2)
    Gtk_New(Tree_View);
    Gtk_New(List_Store, ( 0..3 => Glib.GType_String ));
    Scroll_Box.Add(Tree_View);
 
-   Save_Button.On_Button_Release_Event(Call  => Save_Quotes_Cb'Access,
-                                       Slot  => List_Store,
-                                       After => False);
-   Add_Button.On_Button_Release_Event(Call  => Add_Quote_Cb'Access,
-                                      Slot  => Tree_View,
-                                      After => False);
-   Del_Button.On_Button_Release_Event(Call  => Del_Quote_Cb'Access,
-                                      Slot  => Tree_View,
-                                      After => False);
+   -- connect the buttons with their callbacks
+   -- the `Slot` is the item passed to the `Call` as `Self`
+   Save_Button.On_Button_Release_Event
+      (Call  => Save_Quotes_Cb'Access,
+       Slot  => List_Store,
+       After => False);
+   Add_Button.On_Button_Release_Event
+      (Call  => Add_Quote_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Del_Button.On_Button_Release_Event
+      (Call  => Del_Quote_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+
+   -- fill `List_Store` with the quote data
 
    declare
 
       Num_Quotes : Natural := Number_Of_Quotes(All_Quotes);
       Cell_Value : Glib.Values.GValue;
+      -- used to store strings
 
    begin
 
       -- initialize Cell_Value to hold the correct type
       Glib.Values.Init(Cell_Value, Glib.GType_String);
 
-      -- fill the store
+      -- loop through the quotes
       for Item in 1 .. Num_Quotes loop
 
          declare
 
-            Current_Quote              : Quote_Structure.Quote
+            Current_Quote : Quote_Structure.Quote
                := Quote_Item(All_Quotes, Item - 1);
-            Iter                       : Gtk_Tree_Iter;
-            -- used to iterate thorugh the storage's rows
+            Iter          : Gtk_Tree_Iter;
+            -- used to iterate through the storage's rows
             -- columns are specified directly
 
          begin
 
+            -- add a row, set its values
+
             List_Store.Append(Iter);
+
             Glib.Values.Set_String(Cell_Value, Author_Of(Current_Quote) );
-            List_Store.Set_Value(Iter, 0, Cell_Value );
+            List_Store.Set_Value(Iter, Fields'Pos(Author), Cell_Value );
             Glib.Values.Set_String(Cell_Value, Speaker_Of(Current_Quote) );
-            List_Store.Set_Value(Iter, 1, Cell_Value );
+            List_Store.Set_Value(Iter, Fields'Pos(Speaker), Cell_Value );
             Glib.Values.Set_String(Cell_Value, Source_Of(Current_Quote) );
-            List_Store.Set_Value(Iter, 2, Cell_Value );
+            List_Store.Set_Value(Iter, Fields'Pos(Source), Cell_Value );
             Glib.Values.Set_String(Cell_Value, Body_Of(Current_Quote) );
-            List_Store.Set_Value(Iter, 3, Cell_Value );
+            List_Store.Set_Value(Iter, Fields'Pos(Quotation), Cell_Value );
 
          end;
+
       end loop;
+
    end;
 
+   -- set the tree's model to be `List_Store`;
+   -- notice the need to cast the tagged type
    Tree_View.Set_Model( To_Interface(List_Store) );
 
-   declare
+   -- title the columns and make them editable
 
-      Column_No: Glib.Gint;
-      Column   : Gtk_Tree_View_Column;
-      Text     : Gtk_Cell_Renderer_Text;
-
-   begin
-
-      Gtk_New(Column);
-      Column.Set_Title("Author");
-      Gtk_New(Text);
-      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
-      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
-      Column.Pack_Start(Text, True);
-      Column.Add_Attribute(Text, "text", 0);
-      Column_No := Tree_View.Append_Column(Column);
-      Column.Set_Resizable(True);
-      Column.Set_Sort_Column_Id(0); -- store need not align w/view?!?
-
-      Gtk_New(Column);
-      Column.Set_Title("Speaker");
-      Gtk_New(Text);
-      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
-      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
-      Column.Pack_Start(Text, True);
-      Column.Add_Attribute(Text, "text", 1);
-      Column_No := Tree_View.Append_Column(Column);
-      Column.Set_Resizable(True);
-      Column.Set_Sort_Column_Id(1);
-
-      Gtk_New(Column);
-      Column.Set_Title("Source");
-      Gtk_New(Text);
-      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
-      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
-      Column.Pack_Start(Text, True);
-      Column.Add_Attribute(Text, "text", 2);
-      Column_No := Tree_View.Append_Column(Column);
-      Column.Set_Resizable(True);
-      Column.Set_Sort_Column_Id(2);
-
-      Gtk_New(Column);
-      Column.Set_Title("Quotation");
-      Gtk_New(Text);
-      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
-      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
-      Column.Pack_Start(Text, True);
-      Column.Add_Attribute(Text, "text", 3);
-      Column_No := Tree_View.Append_Column(Column);
-      Column.Set_Resizable(True);
-      Column.Set_Sort_Column_Id(3);
-
-  end;
+   for Field in Fields loop
+      Setup_Column(Field);
+   end loop;
 
    -- Stop the Gtk process when closing the window
    Win.On_Delete_Event (Delete_Main_Window_Cb'Unrestricted_Access);

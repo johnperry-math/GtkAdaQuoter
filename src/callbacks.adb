@@ -17,7 +17,7 @@ with GnatColl.Json;
 
 with Quote_Structure;
 
-package body Gtk_Utility is
+package body Callbacks is
 
    package Tio renames Ada.Text_IO;
 
@@ -68,37 +68,64 @@ package body Gtk_Utility is
      (Self  : access Glib.Object.GObject_Record'Class;
       Event : Gdk.Event.Gdk_Event_Button)
       return Boolean
+   -- handles the response to pressing the save button
    is
+
+      -- let's make our lives a little easier
       subtype JSON_Array is GnatColl.Json.Json_Array;
       subtype JSON_Value is GnatColl.Json.JSON_Value;
+
+      -- relevant UI elements
       Store : Gtk_List_Store := Gtk_List_Store( Self );
       Model : Gtk_Tree_Model := To_Interface(Store);
+
+      -- start from first quote
       Iter  : Gtk_Tree_Iter := Get_Iter_First(Model);
+
+      -- quote-related
       use all type Quote_Structure.Quote;
       use all type Quote_Structure.Quote_Vector;
-      Data: Quote_Structure.Quote_Vector;
+      Data  : Quote_Structure.Quote_Vector;
+
    begin
+
+      -- loop through quotes, adding them to Data
       while Iter /= Null_Iter loop
+
          declare
+            -- need to work out how to change this to use Fields,
+            -- currently in main.adb
             Author_String : UTF8_String := Store.Get_String(Iter, 0);
             Speaker_String: UTF8_String := Store.Get_String(Iter, 1);
             Text_String   : UTF8_String := Store.Get_String(Iter, 2);
             Quote_String  : UTF8_String := Store.Get_String(Iter, 3);
             This_Quote    : Quote_Structure.Quote
                := New_Quote(Author_String, Speaker_String, Quote_String, Text_String);
+
          begin
             Add_Quote(This_Quote, Data);
          end;
+
          Next(Model, Iter);
       end loop;
+
+      -- pop up a filename chooser dialog to get the filename
       declare
+
+         -- let's make our lives a little easier
          package Dialog renames Gtk.Dialog;
          use all type Dialog.Gtk_Response_Type;
          package File_Chooser renames Gtk.File_Chooser;
          package FCD renames Gtk.File_Chooser_Dialog;
+
+         -- the dialog
          Filename_Dialog: FCD.Gtk_File_Chooser_Dialog;
+         -- needed only to discard return value
          Discard: Gtk.Widget.Gtk_Widget;
+
       begin
+
+         -- create chooser dialog
          FCD.Gtk_New
             (
              Dialog    => Filename_Dialog,
@@ -106,6 +133,8 @@ package body Gtk_Utility is
              Parent    => null,
              Action    => File_Chooser.Action_Save
             );
+
+         -- add save, cancel buttons
          Discard := Dialog.Add_Button
             (
              Dialog      => Dialog.Gtk_Dialog(Filename_Dialog),
@@ -118,8 +147,13 @@ package body Gtk_Utility is
              Text        => "_Save",
              Response_Id => Dialog.Gtk_Response_Accept
             );
+
+         -- make sure user is OK with overwriting old file
          FCD.Set_Do_Overwrite_Confirmation(Filename_Dialog, True);
          FCD.Set_Current_Name(Filename_Dialog, "new_signatures.json");
+
+         -- run the dialog and react accordingly
+         -- (if the user cancels we don't do anything)
          if FCD.Run(Filename_Dialog) = Dialog.Gtk_Response_Accept then
             declare Filename: UTF8_String := FCD.Get_Filename(Filename_Dialog);
             begin
@@ -127,9 +161,14 @@ package body Gtk_Utility is
                Write_Quotes(Data, Filename);
             end;
          end if;
+
+         -- don't forget to destroy the dialog or it will stay there
          Gtk.Widget.Destroy(Gtk.Widget.Gtk_Widget(Filename_Dialog));
+
       end;
+
       return True;
+
    end Save_Quotes_Cb;
 
    procedure Get_Store_And_Iter
@@ -137,10 +176,16 @@ package body Gtk_Utility is
        Store : out Gtk_List_Store;
        Iter  : out Gtk_Tree_Iter
       )
+         -- convenience function to prevents repetition of code
+         -- (and Therefore Bugs);
+         -- gets `View`'s `Gtk_List_Store` and
+         -- currently highlighted `Gtk_Tree_Iter` in `View`;
+         -- stores them in `Store` and `Iter`
    is
       Model   : Gtk_Tree_Model := View.Get_Model;
       Path    : Gtk_Tree_Path;
       Column  : Gtk_Tree_View_Column;
+
    begin
       Store := Gtk_List_Store(To_Object(Model));
       View.Get_Cursor(Path, Column);
@@ -173,4 +218,4 @@ package body Gtk_Utility is
       return True;
    end Del_Quote_Cb;
 
-end Gtk_Utility;
+end Callbacks;
