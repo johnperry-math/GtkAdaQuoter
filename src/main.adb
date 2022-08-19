@@ -5,6 +5,7 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 -- Gdk packages (gdk is a low-level API for gtk)
 with Gdk.Event;              use Gdk.Event;
+with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 
 -- Gtk packages
 with Gtk.Box;                use Gtk.Box;
@@ -62,8 +63,6 @@ procedure Main is
    -- horizontal box containing the buttons
    Add_Button, Del_Button, Save_Button : Gtk_Button;
    -- button whose name implies its meaning
-   Add_Label, Del_Label, Save_Label : Gtk_Label;
-   -- label for the corresponding button
 
    -- the quotes
 
@@ -134,12 +133,10 @@ begin
    VBox.Attach (Button_Bar, 0, 1, 9, 10, Expand, Shrink, 0, 0);
 
    -- Buttons for the Button_Bar: Add Quote, Delete Quote, Save Quotes
-   Gtk_New(Add_Button);
-   Gtk_New(Add_Label); Set_Label(Add_Label, "Add Quote"); Add_Button.Add(Add_Label);
-   Gtk_New(Del_Button);
-   Gtk_New(Del_Label); Set_Label(Del_Label, "Delete Quote"); Del_Button.Add(Del_Label);
-   Gtk_New(Save_Button);
-   Gtk_New(Save_Label); Set_Label(Save_Label, "Save Quotes"); Save_Button.Add(Save_Label);
+   Add_Button := Gtk_Button_New_With_Mnemonic("_Add Quote");
+   Del_Button := Gtk_Button_New_With_Mnemonic("_Delete Quote");
+   Save_Button := Gtk_Button_New_With_Mnemonic("_Save Quotes");
+   Win.Add_Mnemonic(Gdk_Lc_A, Add_Button);
 
    Button_Bar.Attach(Add_Button, 1, 2, 0, 1, Shrink, Shrink, 0, 0);
    Button_Bar.Attach(Del_Button, 2, 3, 0, 1, Shrink, Shrink, 0, 0);
@@ -158,12 +155,24 @@ begin
       (Call  => Save_Quotes_Cb'Access,
        Slot  => List_Store,
        After => False);
+   Save_Button.On_Mnemonic_Activate
+      (Call  => Save_Quotes_Mnemonic_Cb'Access,
+       Slot  => List_Store,
+       After => False);
    Add_Button.On_Button_Release_Event
       (Call  => Add_Quote_Cb'Access,
        Slot  => Tree_View,
        After => False);
+   Add_Button.On_Mnemonic_Activate
+      (Call  => Add_Quote_Mnemonic_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
    Del_Button.On_Button_Release_Event
       (Call  => Del_Quote_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Del_Button.On_Mnemonic_Activate
+      (Call  => Del_Quote_Mnemonic_Cb'Access,
        Slot  => Tree_View,
        After => False);
 

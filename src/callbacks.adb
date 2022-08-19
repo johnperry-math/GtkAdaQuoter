@@ -70,6 +70,16 @@ package body Callbacks is
       return Boolean
    -- handles the response to pressing the save button
    is
+   begin
+      return Save_Quotes_Mnemonic_Cb(Self, True);
+   end Save_Quotes_Cb;
+
+   function Save_Quotes_Mnemonic_Cb
+     (Self: access Glib.Object.GObject_Record'Class;
+      Arg : Boolean)
+      return Boolean
+   -- handles the response to pressing the save button
+   is
 
       -- let's make our lives a little easier
       subtype JSON_Array is GnatColl.Json.Json_Array;
@@ -169,7 +179,7 @@ package body Callbacks is
 
       return True;
 
-   end Save_Quotes_Cb;
+   end Save_Quotes_Mnemonic_Cb;
 
    procedure Get_Store_And_Iter
       (View  : Gtk_Tree_View;
@@ -197,17 +207,35 @@ package body Callbacks is
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean
    is
+   begin
+      return Add_Quote_Mnemonic_Cb(Self, False);
+   end Add_Quote_Cb;
+
+   function Add_Quote_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean
+   is
       Store         : Gtk_List_Store;
       Iter, Sibling : Gtk_Tree_Iter;
    begin
       Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Sibling);
       Store.Insert_After(Iter, Sibling);
       return True;
-   end Add_Quote_Cb;
+   end Add_Quote_Mnemonic_Cb;
 
    function Del_Quote_Cb
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean
+   is
+   begin
+      return Del_Quote_Mnemonic_Cb(Self, False);
+   end Del_Quote_Cb;
+
+   function Del_Quote_Mnemonic_Cb
+      (Self : access Glib.Object.GObject_Record'Class;
+       Arg  : Boolean
       ) return Boolean
    is
       Store : Gtk_List_Store;
@@ -216,6 +244,6 @@ package body Callbacks is
       Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Iter);
       Store.Remove(Iter);
       return True;
-   end Del_Quote_Cb;
+   end Del_Quote_Mnemonic_Cb;
 
 end Callbacks;

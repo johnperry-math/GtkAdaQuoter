@@ -56,6 +56,11 @@ package Callbacks is
    -- `Event` is ignored.
    -- Uses a GTK file chooser dialog to prompt for file name.
 
+   function Save_Quotes_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean;
+
    function Add_Quote_Cb
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
@@ -65,6 +70,11 @@ package Callbacks is
    -- `Event` is ignored.
    -- A new row will appear after the currently highlighted one.
 
+   function Add_Quote_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean;
+
    function Del_Quote_Cb
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
@@ -73,5 +83,10 @@ package Callbacks is
    -- `Self` should be a `Gtk_Tree_View`;
    -- `Event` is ignored.
    -- The currently higlighted row will be removed.
+
+   function Del_Quote_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean;
 
 end Callbacks;
