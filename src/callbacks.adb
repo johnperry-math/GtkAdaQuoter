@@ -177,7 +177,7 @@ package body Callbacks is
 
       end;
 
-      return True;
+      return False;
 
    end Save_Quotes_Mnemonic_Cb;
 
@@ -219,9 +219,10 @@ package body Callbacks is
       Store         : Gtk_List_Store;
       Iter, Sibling : Gtk_Tree_Iter;
    begin
+      Ada.Text_IO.Put_Line(Arg'Image);
       Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Sibling);
       Store.Insert_After(Iter, Sibling);
-      return True;
+      return False;
    end Add_Quote_Mnemonic_Cb;
 
    function Del_Quote_Cb
@@ -243,7 +244,7 @@ package body Callbacks is
    begin
       Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Iter);
       Store.Remove(Iter);
-      return True;
+      return False;
    end Del_Quote_Mnemonic_Cb;
 
 end Callbacks;

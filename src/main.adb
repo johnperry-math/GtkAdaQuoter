@@ -5,7 +5,6 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 -- Gdk packages (gdk is a low-level API for gtk)
 with Gdk.Event;              use Gdk.Event;
-with Gdk.Types.Keysyms;      use Gdk.Types.Keysyms;
 
 -- Gtk packages
 with Gtk.Box;                use Gtk.Box;
@@ -136,7 +135,6 @@ begin
    Add_Button := Gtk_Button_New_With_Mnemonic("_Add Quote");
    Del_Button := Gtk_Button_New_With_Mnemonic("_Delete Quote");
    Save_Button := Gtk_Button_New_With_Mnemonic("_Save Quotes");
-   Win.Add_Mnemonic(Gdk_Lc_A, Add_Button);
 
    Button_Bar.Attach(Add_Button, 1, 2, 0, 1, Shrink, Shrink, 0, 0);
    Button_Bar.Attach(Del_Button, 2, 3, 0, 1, Shrink, Shrink, 0, 0);
