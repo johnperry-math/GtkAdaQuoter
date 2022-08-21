@@ -20,8 +20,13 @@ I even ended up contributing quite a bit of material based on this to the
 
 (_maybe_)
 
+- [ ] Better default column widths.
 - [ ] Add a file chooser dialog for opening the file.
-- [ ] Enable a configuration file so that previously-used paths are remembered.
+- [ ] Decent behavior when the default input file isn't found.
+- [ ] Enable a configuration file to remember:
+      - [ ] column widths;
+      - [ ] window dimensions;
+      - [ ] previously-used paths for opening, saving.
 - [ ] Enable tabbing from one cell to another.
 - [ ] Enable drag-and-drop reordering of quotes.
 
