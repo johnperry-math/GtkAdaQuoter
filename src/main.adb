@@ -14,6 +14,8 @@ with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 -- Gdk packages (gdk is a low-level API for gtk)
 with Gdk.Event;              use Gdk.Event;
+with Gdk.Rectangle;          use Gdk.Rectangle;
+with Gdk.Screen;             use Gdk.Screen;
 
 -- Gtk packages
 with Gtk.Box;                use Gtk.Box;
@@ -57,8 +59,15 @@ procedure Main is
 
    -- containers
 
+   Screen    : Gdk.Screen.Gdk_Screen;
+   -- screen containing the main window
+   Monitor_Number: Glib.Gint;
+   -- active monitor
+   Geometry: Gdk.Rectangle.Gdk_Rectangle;
+   -- monitor's geometry
+
    Win        : Gtk_Window;
-   -- the main window
+   -- main window
    Scroll_Box : Gtk_Scrolled_Window;
    -- a scrollbox to contain the tree view
    VBox       : Gtk_Table;
@@ -95,6 +104,9 @@ procedure Main is
          );
    -- for easily mapping the fields to strings in the UI
 
+   Dir_Sep   : Character := GNAT.OS_Lib.Directory_Separator;
+   -- used to open the main directory
+
    procedure Setup_Column(Field: Fields) is
    -- title the columns and make them editable
 
@@ -125,12 +137,9 @@ procedure Main is
 
    end Setup_Column;
 
-   Dir_Sep : Character := GNAT.OS_Lib.Directory_Separator;
-
 begin
 
-   Read_Quotes(
-               GnatColl.VFS.
+   Read_Quotes(GnatColl.VFS.
                   Get_Home_Directory.
                      Display_Full_Name(Normalize => True) & Dir_Sep
                & "signatures" & Dir_Sep
@@ -141,7 +150,10 @@ begin
 
    --  Create a window with a size of 400x400
    Gtk_New (Win);
-   Win.Set_Default_Size (400, 400);
+   Screen := Win.Get_Screen;
+   Monitor_Number := Screen.Get_Monitor_At_Window(Screen.Get_Active_Window);
+   Screen.Get_Monitor_Geometry(Monitor_Number, Geometry);
+   Win.Set_Default_Size (Geometry.Width, Geometry.Height);
 
    -- Create a box for vertical organization of the window contents:
    -- 10 rows, 1 column, different-sized cells

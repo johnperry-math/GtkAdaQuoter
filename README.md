@@ -20,10 +20,13 @@ I even ended up contributing quite a bit of material based on this to the
 
 (_maybe_)
 
-* Add a file chooser dialog for opening the file.
-* Enable a configuration file so that previously-used paths are remembered.
-* Enable tabbing from one cell to another.
-* Enable drag-and-drop reordering of quotes.
+- [ ] Add a file chooser dialog for opening the file.
+- [ ] Enable a configuration file so that previously-used paths are remembered.
+- [ ] Enable tabbing from one cell to another.
+- [ ] Enable drag-and-drop reordering of quotes.
+
+### Done!
+- [x] Choose better default window dimensions.
 
 ## See also
 
