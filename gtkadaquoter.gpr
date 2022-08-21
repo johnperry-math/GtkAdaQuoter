@@ -1,4 +1,5 @@
 with "gtkada";
+with "gnatcoll";
 with "JsonQuoter/json_quoter.gpr";
 
 project GtkAdaQuoter is

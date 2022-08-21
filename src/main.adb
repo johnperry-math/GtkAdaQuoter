@@ -43,6 +43,12 @@ with Glib.Object;
 with Gtkada;
 with Gtkada.Types;
 
+-- Gnat packages
+with Gnat.OS_Lib;
+
+-- GnatColl packages
+with GnatColl.VFS;
+
 -- my packages
 with Quote_Structure; use all type Quote_Structure.Fields;
 with Callbacks;       use Callbacks;
@@ -119,9 +125,16 @@ procedure Main is
 
    end Setup_Column;
 
+   Dir_Sep : Character := GNAT.OS_Lib.Directory_Separator;
+
 begin
 
-   Read_Quotes("/home/cantanima/signatures/all_signatures.json", All_Quotes);
+   Read_Quotes(
+               GnatColl.VFS.
+                  Get_Home_Directory.
+                     Display_Full_Name(Normalize => True) & Dir_Sep
+               & "signatures" & Dir_Sep
+               & "all_signatures.json", All_Quotes);
 
    --  Initialize GtkAda.
    Gtk.Main.Init;
