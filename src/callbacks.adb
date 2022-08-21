@@ -1,8 +1,11 @@
+-- Ada packages
 with Ada.Text_IO;
 
+-- Glib packages
 with Glib.Properties; use Glib.Properties;
 with Glib.Values;     use Glib.Values;
 
+-- Gtk packages
 with Gtk.Dialog;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
@@ -13,18 +16,19 @@ with Gtk.Tree_View;           use Gtk.Tree_View;
 with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
 with Gtk.Widget;
 
+-- GnatColl packages
 with GnatColl.Json;
 
-with Quote_Structure;
+-- my packages
+with Quote_Structure; use all type Quote_Structure.Fields;
 
 package body Callbacks is
-
-   package Tio renames Ada.Text_IO;
 
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;
        Event : Gdk.Event.Gdk_Event)
-      return Boolean
+       return Boolean
+   -- closes the main window
    is
       pragma Unreferenced (Self, Event);
    begin
@@ -39,36 +43,46 @@ package body Callbacks is
        )
          -- handles the response to editing a text cell in a tree view
    is
+
       -- we pass in the tree view as the object
       Tree_View  : Gtk_Tree_View := Gtk_Tree_View(Self);
+
       -- get the tree model, which is a list store;
       -- To_Object converts from the Interface type to the List_Store type
       Model      : Gtk_Tree_Model := Get_Model( Tree_View );
       Store      : Gtk_List_Store := Gtk_List_Store( To_Object(Model) );
+
       -- find the row
       Iter       : Gtk_Tree_Iter := Get_Iter_From_String(Model, Path);
+
       -- to fill in with statements
       Cell_Value : Glib.Values.GValue;
       Tree_Path  : Gtk.Tree_Model.Gtk_Tree_Path;
       Tree_Column: Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Column_Id  : Glib.Gint;
+
    begin
+
       -- initialize cell to hold a string, then put the desired string into it
       Glib.Values.Init(Cell_Value, Glib.GType_String);
       Glib.Values.Set_String(Cell_Value, New_Text);
+
       -- find the active cell in the tree view
       -- (which should be the one we want to update)
       Get_Cursor(Tree_View, Tree_Path, Tree_Column);
       Column_Id := Tree_Column.Get_Sort_Column_Id;
+
       -- finally set the tree view's value to keep the value we wanted
       Set_Value(Store, Iter, Column_Id, Cell_Value);
+
    end Editing_Done;
 
    function Save_Quotes_Cb
      (Self  : access Glib.Object.GObject_Record'Class;
       Event : Gdk.Event.Gdk_Event_Button)
       return Boolean
-   -- handles the response to pressing the save button
+   -- handles the response to pressing the save button"
+   -- this calls the mnemonic version, below
    is
    begin
       return Save_Quotes_Mnemonic_Cb(Self, True);
@@ -78,7 +92,8 @@ package body Callbacks is
      (Self: access Glib.Object.GObject_Record'Class;
       Arg : Boolean)
       return Boolean
-   -- handles the response to pressing the save button
+   -- opens a file dialog that requests a filename,
+   -- then (if the user accepts and confirms any overwrite) saves the file
    is
 
       -- let's make our lives a little easier
@@ -103,14 +118,21 @@ package body Callbacks is
       while Iter /= Null_Iter loop
 
          declare
-            -- need to work out how to change this to use Fields,
-            -- currently in main.adb
-            Author_String : UTF8_String := Store.Get_String(Iter, 0);
-            Speaker_String: UTF8_String := Store.Get_String(Iter, 1);
-            Text_String   : UTF8_String := Store.Get_String(Iter, 2);
-            Quote_String  : UTF8_String := Store.Get_String(Iter, 3);
+            subtype Fields is Quote_Structure.Fields;
+            Author_String : UTF8_String
+               := Store.Get_String(Iter, Fields'Pos(Author));
+            Speaker_String: UTF8_String
+               := Store.Get_String(Iter, Fields'Pos(Speaker));
+            Text_String   : UTF8_String
+               := Store.Get_String(Iter, Fields'Pos(Source));
+            Quote_String  : UTF8_String
+               := Store.Get_String(Iter, Fields'Pos(Quotation));
             This_Quote    : Quote_Structure.Quote
-               := New_Quote(Author_String, Speaker_String, Quote_String, Text_String);
+               := New_Quote
+                  .With_Field(Author, Author_String)
+                  .With_Field(Speaker, Speaker_String)
+                  .With_Field(Source, Text_String)
+                  .With_Field(Quotation, Quote_String);
 
          begin
             Add_Quote(This_Quote, Data);
@@ -167,7 +189,6 @@ package body Callbacks is
          if FCD.Run(Filename_Dialog) = Dialog.Gtk_Response_Accept then
             declare Filename: UTF8_String := FCD.Get_Filename(Filename_Dialog);
             begin
-               Tio.Put_Line("Writing to " & Filename);
                Write_Quotes(Data, Filename);
             end;
          end if;
@@ -206,6 +227,8 @@ package body Callbacks is
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean
+   -- callback to respond to the "Add Quote" button:
+   -- this calls the mnemonic version below
    is
    begin
       return Add_Quote_Mnemonic_Cb(Self, False);
@@ -215,6 +238,8 @@ package body Callbacks is
       (Self: access Glib.Object.GObject_Record'Class;
        Arg : Boolean
       ) return Boolean
+   -- callback to respond to the "Add Quote" mnemonic:
+   -- adds a new row beneath the one currently highlighted
    is
       Store         : Gtk_List_Store;
       Iter, Sibling : Gtk_Tree_Iter;
@@ -229,6 +254,8 @@ package body Callbacks is
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean
+   -- callback to respond to the "Delete Quote" button:
+   -- this calls the mnemonic version below
    is
    begin
       return Del_Quote_Mnemonic_Cb(Self, False);
@@ -238,6 +265,8 @@ package body Callbacks is
       (Self : access Glib.Object.GObject_Record'Class;
        Arg  : Boolean
       ) return Boolean
+   -- callback to respond to the "Delete Quote" mnemonic:
+   -- deletes the currently highlighted row
    is
       Store : Gtk_List_Store;
       Iter  : Gtk_Tree_Iter;

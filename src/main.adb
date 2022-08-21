@@ -1,3 +1,12 @@
+-- A Gtk frontend to a "fortune"-like program,
+-- written to introduce myself to GtkAda.
+-- Reads quotes from a file whose format is described in JsonQuoter;
+-- see also the Fields type.
+-- It then opens a window that displays the quotes
+-- and allows the user to edit, add, delete, and save quotes.
+-- Uses Gtk's UI elements FileChooser, TreeView, and Button,
+-- along with mnemonics.
+
 -- Ada packages
 with Ada.Text_IO;
 with Ada.Containers.Vectors;
@@ -35,8 +44,8 @@ with Gtkada;
 with Gtkada.Types;
 
 -- my packages
-with Quote_Structure;
-with Callbacks;     use Callbacks;
+with Quote_Structure; use all type Quote_Structure.Fields;
+with Callbacks;       use Callbacks;
 
 procedure Main is
 
@@ -65,28 +74,29 @@ procedure Main is
 
    -- the quotes
 
-   All_Quotes: Quote_Structure.Quote_Vector;
-   use all type Quote_Structure.Quote_Vector;
+   subtype Fields is Quote_Structure.Fields;
    use all type Quote_Structure.Quote;
+   use all type Quote_Structure.Quote_Vector;
 
-   type Fields is ( Author, Speaker, Source, Quotation );
+   All_Quotes: Quote_Structure.Quote_Vector;
+   -- all quotes read from the resource file
+
    Field_Names: array (Fields) of Ada.Strings.Unbounded.Unbounded_String
       := (To_Unbounded_String("Author"),
           To_Unbounded_String("Speaker"),
           To_Unbounded_String("Source"),
           To_Unbounded_String("Quotation")
          );
-
-   Dummy: Glib.Gint;
-   -- a dummy variable needed for an unused return value
+   -- for easily mapping the fields to strings in the UI
 
    procedure Setup_Column(Field: Fields) is
    -- title the columns and make them editable
 
+      use all type Glib.Gint;
+
       Column_No: Glib.Gint;
       Column   : Gtk_Tree_View_Column;
       Text     : Gtk_Cell_Renderer_Text;
-      use all type Glib.Gint;
 
    begin
 
