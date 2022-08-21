@@ -1,0 +1,3 @@
+[submodule "JsonQuoter"]
+	path = JsonQuoter
+	url = https://github.com/johnperry-math/JsonQuoter.git

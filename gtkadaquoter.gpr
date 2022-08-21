@@ -1,5 +1,5 @@
 with "gtkada";
-with "../JsonQuoter/json_quoter.gpr";
+with "JsonQuoter/json_quoter.gpr";
 
 project GtkAdaQuoter is
 
