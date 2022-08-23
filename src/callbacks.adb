@@ -66,7 +66,6 @@ package body Callbacks is
       Tree_Column: Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Column_Id  : Glib.Gint;
       Row_Id     : Glib.Gint;
-      New_Path   : Gtk.Tree_Model.Gtk_Tree_Path;
 
       subtype Fields is Quote_Structure.Fields;
 
@@ -261,7 +260,6 @@ package body Callbacks is
       Store         : Gtk_List_Store;
       Iter, Sibling : Gtk_Tree_Iter;
    begin
-      Ada.Text_IO.Put_Line(Arg'Image);
       Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Sibling);
       Store.Insert_After(Iter, Sibling);
       return False;
