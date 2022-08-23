@@ -13,7 +13,6 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 -- Gdk packages (gdk is a low-level API for gtk)
-with Gdk.Event;              use Gdk.Event;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Screen;             use Gdk.Screen;
 
@@ -125,6 +124,7 @@ procedure Main is
 
       -- column: title, pack text into it, attribute, resizable, sortable
       Gtk_New(Column);
+      Set_Quoter_Column(Field, Column);
       Column.Set_Title(To_String(Field_Names(Field)));
       Column.Pack_Start(Text, True);
       Column.Add_Attribute(Text, "text", Fields'Pos(Field));
@@ -257,6 +257,7 @@ begin
    -- set the tree's model to be `List_Store`;
    -- notice the need to cast the tagged type
    Tree_View.Set_Model( To_Interface(List_Store) );
+   Tree_View.Set_Reorderable(True);
 
    -- title the columns and make them editable
 

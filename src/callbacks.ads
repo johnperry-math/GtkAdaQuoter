@@ -17,6 +17,7 @@ with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 
 -- Ada packages
@@ -24,10 +25,17 @@ with Ada.Containers;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash;
 
-
+-- my packages
+with Quote_Structure; use Quote_Structure;
 
 package Callbacks is
-   -- Callback functions for the UI elements.
+-- Callbacks and other utility functions for the UI elements.
+
+   procedure Set_Quoter_Column(Field: Fields; Column: Gtk_Tree_View_Column);
+   -- Used to record that Field corresponds to Column.
+   -- We need this because Gtk does not allow one to access Tree_View columns
+   -- by their number in the list -- rather mysteriously to me, you can get it
+   -- from a path, but you can't create a path using a column number...
 
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;
@@ -88,5 +96,9 @@ package Callbacks is
       (Self: access Glib.Object.GObject_Record'Class;
        Arg : Boolean
       ) return Boolean;
+
+private
+
+   Column_For_Field: array(Fields) of Gtk_Tree_View_Column;
 
 end Callbacks;

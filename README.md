@@ -27,11 +27,13 @@ I even ended up contributing quite a bit of material based on this to the
       - [ ] column widths;
       - [ ] window dimensions;
       - [ ] previously-used paths for opening, saving.
-- [ ] Enable tabbing from one cell to another.
-- [ ] Enable drag-and-drop reordering of quotes.
+- [ ] Enable a Ctrl-Q shortcut.
+- [ ] Fix the bug that arises when tabbing away from an active but un-edited cell.
 
 ### Done!
 - [x] Choose better default window dimensions.
+- [x] Enable drag-and-drop reordering of quotes.
+- [x] When editing is complete, enable automatic navigation to next cell.
 
 ## See also
 
