@@ -31,12 +31,6 @@ with Quote_Structure; use Quote_Structure;
 package Callbacks is
 -- Callbacks and other utility functions for the UI elements.
 
-   procedure Set_Quoter_Column(Field: Fields; Column: Gtk_Tree_View_Column);
-   -- Used to record that Field corresponds to Column.
-   -- We need this because Gtk does not allow one to access Tree_View columns
-   -- by their number in the list -- rather mysteriously to me, you can get it
-   -- from a path, but you can't create a path using a column number...
-
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;
        Event : Gdk.Event.Gdk_Event)
@@ -96,9 +90,5 @@ package Callbacks is
       (Self: access Glib.Object.GObject_Record'Class;
        Arg : Boolean
       ) return Boolean;
-
-private
-
-   Column_For_Field: array(Fields) of Gtk_Tree_View_Column;
 
 end Callbacks;

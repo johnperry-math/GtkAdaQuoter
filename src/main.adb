@@ -124,7 +124,6 @@ procedure Main is
 
       -- column: title, pack text into it, attribute, resizable, sortable
       Gtk_New(Column);
-      Set_Quoter_Column(Field, Column);
       Column.Set_Title(To_String(Field_Names(Field)));
       Column.Pack_Start(Text, True);
       Column.Add_Attribute(Text, "text", Fields'Pos(Field));

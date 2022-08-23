@@ -24,11 +24,6 @@ with Quote_Structure; use all type Quote_Structure.Fields;
 
 package body Callbacks is
 
-   procedure Set_Quoter_Column(Field: Fields; Column: Gtk_Tree_View_Column) is
-   begin
-      Column_For_Field(Field) := Column;
-   end Set_Quoter_Column;
-
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;
        Event : Gdk.Event.Gdk_Event)
@@ -83,13 +78,15 @@ package body Callbacks is
 
       -- finally set the tree view's value to keep the value we wanted
       Set_Value(Store, Iter, Column_Id, Cell_Value);
+      Tree_View.Set_Cursor(Tree_Path, Tree_View.Get_Column(Column_Id), True);
 
       -- move to next cell and make it editable
       Column_Id := ( Column_Id + 1 ) mod ( Fields'Pos(Fields'Last) + 1);
       if Column_Id = 0 then Tree_Path.Next; end if;
 
       Tree_View.Set_Cursor
-         (Tree_Path, Column_For_Field(Fields'Val(Column_Id)), True);
+         (Tree_Path, Tree_View.Get_Column(Column_Id), True);
+      Gtk.Tree_Model.Path_Free(Tree_Path);
 
    end Editing_Done;
 
