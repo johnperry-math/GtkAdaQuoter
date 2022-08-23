@@ -124,7 +124,6 @@ procedure Main is
 
       -- column: title, pack text into it, attribute, resizable, sortable
       Gtk_New(Column);
-      Set_Quoter_Column(Field, Column);
       Column.Set_Title(To_String(Field_Names(Field)));
       Column.Pack_Start(Text, True);
       Column.Add_Attribute(Text, "text", Fields'Pos(Field));
@@ -139,14 +138,24 @@ procedure Main is
 
 begin
 
-   Read_Quotes(GnatColl.VFS.
-                  Get_Home_Directory.
-                     Display_Full_Name(Normalize => True) & Dir_Sep
-               & "signatures" & Dir_Sep
-               & "all_signatures.json", All_Quotes);
-
    --  Initialize GtkAda.
    Gtk.Main.Init;
+
+   --  Read_Quotes(GnatColl.VFS.
+   --                 Get_Home_Directory.
+   --                    Display_Full_Name(Normalize => True) & Dir_Sep
+   --              & "signatures" & Dir_Sep
+   --              & "all_signatures.json", All_Quotes);
+
+   declare
+      Path: String := GnatColl.VFS.
+         Get_Home_Directory.
+            Display_Full_Name(Normalize => True) & Dir_Sep
+         & "signatures" & Dir_Sep;
+      File_Path: String := Get_Source_File(Path);
+   begin
+      Read_Quotes(File_Path, All_Quotes);
+   end;
 
    --  Create a window with a size of 400x400
    Gtk_New (Win);

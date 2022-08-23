@@ -21,7 +21,6 @@ I even ended up contributing quite a bit of material based on this to the
 (_maybe_)
 
 - [ ] Better default column widths.
-- [ ] Add a file chooser dialog for opening the file.
 - [ ] Decent behavior when the default input file isn't found.
 - [ ] Enable a configuration file to remember:
       - [ ] column widths;
@@ -31,6 +30,7 @@ I even ended up contributing quite a bit of material based on this to the
 - [ ] Fix the bug that arises when tabbing away from an active but un-edited cell.
 
 ### Done!
+- [x] Add a file chooser dialog for opening the file.
 - [x] Choose better default window dimensions.
 - [x] Enable drag-and-drop reordering of quotes.
 - [x] When editing is complete, enable automatic navigation to next cell.

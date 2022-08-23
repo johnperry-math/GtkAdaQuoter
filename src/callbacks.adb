@@ -1,5 +1,6 @@
 -- Ada packages
 with Ada.Text_IO;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 -- Glib packages
 with Glib.Properties; use Glib.Properties;
@@ -23,11 +24,6 @@ with GnatColl.Json;
 with Quote_Structure; use all type Quote_Structure.Fields;
 
 package body Callbacks is
-
-   procedure Set_Quoter_Column(Field: Fields; Column: Gtk_Tree_View_Column) is
-   begin
-      Column_For_Field(Field) := Column;
-   end Set_Quoter_Column;
 
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;
@@ -83,15 +79,73 @@ package body Callbacks is
 
       -- finally set the tree view's value to keep the value we wanted
       Set_Value(Store, Iter, Column_Id, Cell_Value);
+      Tree_View.Set_Cursor(Tree_Path, Tree_View.Get_Column(Column_Id), True);
 
       -- move to next cell and make it editable
       Column_Id := ( Column_Id + 1 ) mod ( Fields'Pos(Fields'Last) + 1);
       if Column_Id = 0 then Tree_Path.Next; end if;
 
       Tree_View.Set_Cursor
-         (Tree_Path, Column_For_Field(Fields'Val(Column_Id)), True);
+         (Tree_Path, Tree_View.Get_Column(Column_Id), True);
+      Gtk.Tree_Model.Path_Free(Tree_Path);
 
    end Editing_Done;
+
+   function Get_Source_File(Path: String) return String
+   is
+      -- let's make our lives a little easier
+      package Dialog renames Gtk.Dialog;
+      use all type Dialog.Gtk_Response_Type;
+      package File_Chooser renames Gtk.File_Chooser;
+      package FCD renames Gtk.File_Chooser_Dialog;
+
+      -- the dialog
+      Filename_Dialog: FCD.Gtk_File_Chooser_Dialog;
+      -- needed only to discard return value
+      Discard        : Gtk.Widget.Gtk_Widget;
+      Success        : Boolean;
+   begin
+
+      -- create chooser dialog
+      FCD.Gtk_New
+         (
+          Dialog    => Filename_Dialog,
+          Title     => "Json input path",
+          Parent    => null,
+          Action    => File_Chooser.Action_Open
+         );
+
+      -- add save, cancel buttons
+      Discard := Dialog.Add_Button
+         (
+          Dialog      => Dialog.Gtk_Dialog(Filename_Dialog),
+          Text        => "_Cancel",
+          Response_Id => Dialog.Gtk_Response_Cancel
+         );
+      Discard := Dialog.Add_Button
+         (
+          Dialog      => Dialog.Gtk_Dialog(Filename_Dialog),
+          Text        => "_Open",
+          Response_Id => Dialog.Gtk_Response_Accept
+         );
+
+      Success := FCD.Set_Current_Folder(Filename_Dialog, Path);
+
+      -- run the dialog and react accordingly
+      -- (if the user cancels we don't do anything)
+      if FCD.Run(Filename_Dialog) = Dialog.Gtk_Response_Accept then
+         declare Result: String := FCD.Get_Filename(Filename_Dialog);
+         begin
+            Gtk.Widget.Destroy(Gtk.Widget.Gtk_Widget(Filename_Dialog));
+            return Result;
+         end;
+      end if;
+
+      -- don't forget to destroy the dialog or it will stay there
+      Gtk.Widget.Destroy(Gtk.Widget.Gtk_Widget(Filename_Dialog));
+      return "";
+
+   end Get_Source_File;
 
    function Save_Quotes_Cb
      (Self  : access Glib.Object.GObject_Record'Class;
