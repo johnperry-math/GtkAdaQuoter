@@ -23,6 +23,7 @@ with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Editable;           use Gtk.Editable;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Fixed;              use Gtk.Fixed;
+with Gtk.Image;              use Gtk.Image;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Main;
@@ -83,7 +84,7 @@ procedure Main is
 
    Button_Bar : Gtk_Table;
    -- horizontal box containing the buttons
-   Add_Button, Del_Button, Save_Button : Gtk_Button;
+   Add_Button, Del_Button, Save_Button, Quit_Button: Gtk_Button;
    -- button whose name implies its meaning
 
    -- the quotes
@@ -141,12 +142,6 @@ begin
    --  Initialize GtkAda.
    Gtk.Main.Init;
 
-   --  Read_Quotes(GnatColl.VFS.
-   --                 Get_Home_Directory.
-   --                    Display_Full_Name(Normalize => True) & Dir_Sep
-   --              & "signatures" & Dir_Sep
-   --              & "all_signatures.json", All_Quotes);
-
    declare
       Path: String := GnatColl.VFS.
          Get_Home_Directory.
@@ -157,7 +152,7 @@ begin
       Read_Quotes(File_Path, All_Quotes);
    end;
 
-   --  Create a window with a size of 400x400
+   --  Create a full-size window
    Gtk_New (Win);
    Screen := Win.Get_Screen;
    Monitor_Number := Screen.Get_Monitor_At_Window(Screen.Get_Active_Window);
@@ -172,19 +167,30 @@ begin
    VBox.Attach(Scroll_Box, 0, 1, 0, 8, Expand + Fill, Expand + Fill, 0, 0);
 
    -- A horizontally-flowing box in position (0,9) - (1,10)
-   Button_Bar := Gtk_Table_New(1, 5, True);
-   VBox.Attach (Button_Bar, 0, 1, 9, 10, Expand, Shrink, 0, 0);
+   Button_Bar := Gtk_Table_New(1, 10, True);
+   VBox.Attach(Button_Bar, 0, 1, 9, 10, Expand + Fill, Shrink, 0, 0);
 
    -- Buttons for the Button_Bar: Add Quote, Delete Quote, Save Quotes
    Add_Button := Gtk_Button_New_With_Mnemonic("_Add Quote");
    Del_Button := Gtk_Button_New_With_Mnemonic("_Delete Quote");
    Save_Button := Gtk_Button_New_With_Mnemonic("_Save Quotes");
+   Quit_Button := Gtk_Button_New_With_Mnemonic("_Quit");
+   -- gtk devs think you shouldn't combine labels and icons in buttons
+   -- so we opt for labels with mnemonics
+   --  Add_Button := Gtk_Button_New_From_Icon_Name("list-add-symbolic", Icon_Size_Button);
+   --  Del_Button := Gtk_Button_New_From_Icon_Name("list-remove-symbolic", Icon_Size_Button);
+   --  Save_Button := Gtk_Button_New_From_Icon_Name("document-save-symbolic", Icon_Size_Button);
+   --  Quit_Button := Gtk_Button_New_From_Icon_Name("process-stop-symbolic", Icon_Size_Button);
 
-   Button_Bar.Attach(Add_Button, 1, 2, 0, 1, Shrink, Shrink, 0, 0);
-   Button_Bar.Attach(Del_Button, 2, 3, 0, 1, Shrink, Shrink, 0, 0);
-   Button_Bar.Attach(Save_Button, 4, 5, 0, 1, Shrink, Shrink, 0, 0);
-   Set_VExpand(Button_Bar, False);
-   Set_Size_Request(Button_Bar, 40, 20);
+   --  Save_Button.Set_Halign(Align_Start); -- this will place buttons at extremes
+   --  Quit_Button.Set_Halign(Align_End);   -- but it is rather unsightly
+   Button_Bar.Attach(Save_Button, 0, 1, 0, 1, Fill, Shrink, 0, 0);
+   Button_Bar.Attach(Add_Button, 4, 5, 0, 1, Expand, Shrink, 0, 0);
+   Button_Bar.Attach(Del_Button, 5, 6, 0, 1, Expand, Shrink, 0, 0);
+   Button_Bar.Attach(Quit_Button, 9, 10, 0, 1, Fill, Shrink, 0, 0);
+   Button_Bar.Set_VExpand(False);
+   Button_Bar.Set_Hexpand(True);
+   Button_Bar.Set_Size_Request(40, 20);
 
    -- Iniitalize a tree view with its backing storage of 3 columns (0..2)
    Gtk_New(Tree_View);
@@ -216,6 +222,18 @@ begin
    Del_Button.On_Mnemonic_Activate
       (Call  => Del_Quote_Mnemonic_Cb'Access,
        Slot  => Tree_View,
+       After => False);
+   Quit_Button.On_Button_Release_Event
+      (Call  => Quit_Button_Cb'Access,
+       Slot  => Win,
+       After => False);
+   Quit_Button.On_Mnemonic_Activate
+      (Call  => Quit_Button_Mnemonic_Cb'Access,
+       Slot  => Win,
+       After => False);
+   Win.On_Key_Release_Event
+      (Call  => Window_Key_Release_Cb'Access,
+       Slot  => Win,
        After => False);
 
    -- fill `List_Store` with the quote data

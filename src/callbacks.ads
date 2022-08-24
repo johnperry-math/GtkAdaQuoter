@@ -96,4 +96,22 @@ package Callbacks is
        Arg : Boolean
       ) return Boolean;
 
+   function Quit_Button_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean;
+   -- Callback for quitting.
+   -- `Self` should be a `Gtk_Window`;
+   -- `Event` is ignored.
+
+   function Quit_Button_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean;
+
+   function Window_Key_Release_Cb
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key
+     ) return Boolean;
+
 end Callbacks;

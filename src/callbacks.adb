@@ -7,6 +7,10 @@ with Glib.Properties; use Glib.Properties;
 with Glib.Values;     use Glib.Values;
 
 -- Gtk packages
+with Gdk.Types;
+with Gdk.Types.Keysyms;
+
+-- Gtk packages
 with Gtk.Dialog;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
@@ -34,7 +38,7 @@ package body Callbacks is
       pragma Unreferenced (Self, Event);
    begin
       Gtk.Main.Main_Quit;
-      return True;
+      return False;
    end Delete_Main_Window_Cb;
 
    procedure Editing_Done
@@ -344,5 +348,45 @@ package body Callbacks is
       Store.Remove(Iter);
       return False;
    end Del_Quote_Mnemonic_Cb;
+
+   function Quit_Button_Cb
+      (Self  : access Glib.Object.GObject_Record'Class;
+       Event : Gdk.Event.Gdk_Event_Button
+      ) return Boolean
+   is
+   begin
+      return Delete_Main_Window_Cb(Gtk_Widget(Self), null);
+   end Quit_Button_Cb;
+
+   function Quit_Button_Mnemonic_Cb
+      (Self: access Glib.Object.GObject_Record'Class;
+       Arg : Boolean
+      ) return Boolean
+   is
+      Dummy: Boolean := Delete_Main_Window_Cb(Gtk_Widget(Self), null);
+   begin
+      return False;
+   end Quit_Button_Mnemonic_Cb;
+
+   function Window_Key_Release_Cb
+     (Self  : access Glib.Object.GObject_Record'Class;
+      Event : Gdk.Event.Gdk_Event_Key
+     ) return Boolean
+   is
+      package Key_Types renames Gdk.Types;
+      use all type Key_Types.Gdk_Key_Type;
+      use all type Key_Types.Gdk_Modifier_Type;
+      package Key_Syms renames Gdk.Types.Keysyms;
+      Modifier: Key_Types.Gdk_Modifier_Type := Event.State;
+      Keyval: Key_Types.Gdk_Key_Type := Event.Keyval;
+   begin
+      if Modifier = Key_Types.Control_Mask and
+         ( Keyval = Key_Syms.GDK_LC_Q or Keyval = Key_Syms.GDK_LC_W) then
+         return Delete_Main_Window_Cb(Gtk_Widget(Self), null);
+      else
+         return False;
+      end if;
+   end Window_Key_Release_Cb;
+
 
 end Callbacks;
