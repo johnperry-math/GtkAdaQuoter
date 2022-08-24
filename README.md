@@ -22,9 +22,11 @@ I even ended up contributing quite a bit of material based on this to the
 
 - [ ] Better default column widths.
 - [ ] Enable a configuration file to remember:
-      - [ ] column widths;
-      - [ ] window dimensions;
-      - [ ] previously-used paths for opening, saving.
+
+     - [ ] column widths;
+     - [ ] window dimensions;
+     - [ ] previously-used paths for opening, saving.
+
 - [ ] Enable a Ctrl-Q shortcut.
 - [ ] Fix the bug that arises when tabbing away from an active but un-edited cell.
 
