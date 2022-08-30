@@ -27,12 +27,25 @@ with Gtk.Widget;             use Gtk.Widget;
 with Ada.Containers;
 with Ada.Containers.Hashed_Maps;
 with Ada.Strings.Hash;
+with Ada.Strings.Unbounded;      use ADa.Strings.Unbounded;
 
 -- my packages
 with Quote_Structure; use Quote_Structure;
 
 package Callbacks is
 -- Callbacks and other utility functions for the UI elements.
+
+   Configuration_File: constant String := ".gtkadaquoter_cfg";
+
+   Field_Names: array (Fields) of Ada.Strings.Unbounded.Unbounded_String
+      := (To_Unbounded_String("Author"),
+          To_Unbounded_String("Speaker"),
+          To_Unbounded_String("Source"),
+          To_Unbounded_String("Quotation")
+         );
+   -- for easily mapping the fields to strings in the UI
+
+
 
    function Delete_Main_Window_Cb
       (Self  : access Gtk_Widget_Record'Class;

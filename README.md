@@ -20,10 +20,8 @@ I even ended up contributing quite a bit of material based on this to the
 
 (_maybe_)
 
-- [ ] Better default column widths.
-- [ ] Enable a configuration file to remember:
+- [ ] Enable ~a~ the configuration file to remember:
 
-     - [ ] column widths;
      - [ ] window dimensions;
      - [ ] previously-used paths for opening, saving.
 
@@ -37,10 +35,16 @@ I even ended up contributing quite a bit of material based on this to the
     Who Know Better Than You (TM).
 - [x] Choose better default window dimensions.
 - [x] Decent behavior when the default input file isn't found.
+- [x] Decent behavior when the input file chooser dialog is canceled.
+- [x] ~~Better default column widths.~~ OBE by configuration file
+- [x] Enable a configuration file to remember:
+
+     - [x] column widths.
+
 - [x] Enable a Ctrl-Q shortcut.
 - [x] Enable a Ctrl-W shortcut.
 - [x] Enable drag-and-drop reordering of quotes.
-- [x] ~~Fix button aligntment.~~
+- [x] ~~Fix button alignment.~~
       Figure out why the button bar does not expand to window edges.
   - Turns out this is due to GTK's unintuitive `GTK_Attach_Options`.
     I managed to get it to hit the edges (see commented code)

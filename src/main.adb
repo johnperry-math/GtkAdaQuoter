@@ -45,10 +45,11 @@ with Glib.Object;
 with Gtkada;
 with Gtkada.Types;
 
--- Gnat packages
+-- Gnat-specific packages
 with Gnat.OS_Lib;
 
 -- GnatColl packages
+with GnatColl.JSON;
 with GnatColl.VFS;
 
 -- my packages
@@ -93,16 +94,10 @@ procedure Main is
    use all type Quote_Structure.Quote;
    use all type Quote_Structure.Quote_Vector;
 
+   Column_Widths: array(Fields) of Integer := (others => 0);
+
    All_Quotes: Quote_Structure.Quote_Vector;
    -- all quotes read from the resource file
-
-   Field_Names: array (Fields) of Ada.Strings.Unbounded.Unbounded_String
-      := (To_Unbounded_String("Author"),
-          To_Unbounded_String("Speaker"),
-          To_Unbounded_String("Source"),
-          To_Unbounded_String("Quotation")
-         );
-   -- for easily mapping the fields to strings in the UI
 
    Dir_Sep   : Character := GNAT.OS_Lib.Directory_Separator;
    -- used to open the main directory
@@ -130,6 +125,9 @@ procedure Main is
       Column.Add_Attribute(Text, "text", Fields'Pos(Field));
       Column.Set_Resizable(True);
       Column.Set_Sort_Column_Id(Fields'Pos(Field));
+      if Column_Widths(Field) /= 0 then
+         Column.Set_Fixed_Width(Glib.Gint(Column_Widths(Field)));
+      end if;
 
       -- finally, add it to the tree view
       -- interestingly, column number might differ from sort id above
@@ -137,19 +135,53 @@ procedure Main is
 
    end Setup_Column;
 
+   Home_Path : String := GnatColl.VFS.Get_Home_Directory.
+      Display_Full_Name(Normalize => True) & Dir_Sep;
+
 begin
 
    --  Initialize GtkAda.
    Gtk.Main.Init;
 
+   -- read signatures
    declare
-      Path: String := GnatColl.VFS.
-         Get_Home_Directory.
-            Display_Full_Name(Normalize => True) & Dir_Sep
-         & "signatures" & Dir_Sep;
+      Path: String := Home_Path & "signatures" & Dir_Sep;
       File_Path: String := Get_Source_File(Path);
    begin
       Read_Quotes(File_Path, All_Quotes);
+   end;
+
+   -- read configuration, if it exists
+   declare
+      package Tio renames Ada.Text_IO;
+      Config_Path: String := Home_Path & Configuration_File;
+      Config_File: Tio.File_Type;
+      Data: GnatColl.JSON.JSON_Value;
+      Read_Result: GnatColl.JSON.Read_Result;
+      All_Lines: Unbounded_String;
+   begin
+      Tio.Open(Config_File, Tio.In_File, Config_Path);
+      while not Tio.End_Of_File(Config_File) loop
+         declare Line: String := Tio.Get_Line(Config_File);
+         begin
+            Append(All_Lines, Line);
+         end;
+      end loop;
+      Tio.Close(Config_File);
+      Read_Result := GnatColl.JSON.Read(All_Lines);
+      if Read_Result.Success then
+         for Field in Fields loop
+            if Read_Result.Value.Has_Field(To_String(Field_Names(Field))) then
+               Column_Widths(Field)
+                  := Read_Result.Value.Get(To_String(Field_Names(Field)));
+            end if;
+         end loop;
+      end if;
+   exception
+      when E: Tio.Status_Error =>
+         Tio.Put_Line("** gtkadaquoter ** could not find configuration file " & Configuration_File);
+      when others =>
+         Tio.Put_Line("** gtkadaquoter ** could not read configuration file " & Configuration_File);
    end;
 
    --  Create a full-size window
@@ -229,11 +261,11 @@ begin
        After => False);
    Quit_Button.On_Mnemonic_Activate
       (Call  => Quit_Button_Mnemonic_Cb'Access,
-       Slot  => Win,
+       Slot  => Tree_View,
        After => False);
    Win.On_Key_Release_Event
       (Call  => Window_Key_Release_Cb'Access,
-       Slot  => Win,
+       Slot  => Tree_View,
        After => False);
 
    -- fill `List_Store` with the quote data

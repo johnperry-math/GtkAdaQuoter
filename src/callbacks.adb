@@ -23,6 +23,10 @@ with Gtk.Widget;
 
 -- GnatColl packages
 with GnatColl.Json;
+with GnatColl.VFS;
+
+-- GNAT-specific packages
+with GNAT.OS_Lib;
 
 -- my packages
 with Quote_Structure; use all type Quote_Structure.Fields;
@@ -35,8 +39,52 @@ package body Callbacks is
        return Boolean
    -- closes the main window
    is
-      pragma Unreferenced (Self, Event);
+      -- let's make our lives a little easier
+      subtype JSON_Array is GnatColl.Json.Json_Array;
+      subtype JSON_Value is GnatColl.Json.JSON_Value;
+      package Tio renames Ada.Text_IO;
+
+      Dir_Sep         : Character := GNAT.OS_Lib.Directory_Separator;
+      Config_Filename : String := GnatColl.VFS.
+         Get_Home_Directory.
+            Display_Full_Name(Normalize => True) & Dir_Sep
+         & Configuration_File;
+      Config_File     : Tio.File_Type;
+
+      Tree_View: Gtk_Tree_View := Gtk_Tree_View(Self);
+      Author_Column: Gtk_Tree_View_Column
+         := Tree_View.Get_Column(Fields'Pos(Author));
+      Speaker_Column: Gtk_Tree_View_Column
+         := Tree_View.Get_Column(Fields'Pos(Speaker));
+      Source_Column: Gtk_Tree_View_Column
+         := Tree_View.Get_Column(Fields'Pos(Source));
+      Quotation_Column: Gtk_Tree_View_Column
+         := Tree_View.Get_Column(Fields'Pos(Quotation));
+
+      Output: JSON_Value;
+
+      procedure Set_Field_Integer
+     (Val        : JSON_Value;
+      Field_Name : UTF8_String;
+      Field      : Integer) renames GnatColl.JSON.Set_Field;
+
    begin
+
+      Output := GnatColl.JSON.Create_Object;
+
+      Output.Set_Field
+         (To_String(Field_Names(Author)), Integer(Author_Column.Get_Width));
+      Output.Set_Field
+         (To_String(Field_Names(Source)), Integer(Source_Column.Get_Width));
+      Output.Set_Field
+         (To_String(Field_Names(Speaker)), Integer(Speaker_Column.Get_Width));
+      Output.Set_Field
+         (To_String(Field_Names(Quotation)),Integer(Quotation_Column.Get_Width));
+
+      Tio.Create(Config_File, Name => Config_Filename);
+      Tio.Put(Config_File, GnatColl.JSON.Write(Output, False));
+      Tio.Close(Config_File);
+
       Gtk.Main.Main_Quit;
       return False;
    end Delete_Main_Window_Cb;
@@ -157,10 +205,7 @@ package body Callbacks is
       return Boolean
    -- handles the response to pressing the save button"
    -- this calls the mnemonic version, below
-   is
-   begin
-      return Save_Quotes_Mnemonic_Cb(Self, True);
-   end Save_Quotes_Cb;
+   is ( Save_Quotes_Mnemonic_Cb(Self, True) );
 
    function Save_Quotes_Mnemonic_Cb
      (Self: access Glib.Object.GObject_Record'Class;
@@ -303,10 +348,7 @@ package body Callbacks is
       ) return Boolean
    -- callback to respond to the "Add Quote" button:
    -- this calls the mnemonic version below
-   is
-   begin
-      return Add_Quote_Mnemonic_Cb(Self, False);
-   end Add_Quote_Cb;
+   is ( Add_Quote_Mnemonic_Cb(Self, False) );
 
    function Add_Quote_Mnemonic_Cb
       (Self: access Glib.Object.GObject_Record'Class;
@@ -329,10 +371,7 @@ package body Callbacks is
       ) return Boolean
    -- callback to respond to the "Delete Quote" button:
    -- this calls the mnemonic version below
-   is
-   begin
-      return Del_Quote_Mnemonic_Cb(Self, False);
-   end Del_Quote_Cb;
+   is ( Del_Quote_Mnemonic_Cb(Self, False) );
 
    function Del_Quote_Mnemonic_Cb
       (Self : access Glib.Object.GObject_Record'Class;
@@ -353,20 +392,13 @@ package body Callbacks is
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean
-   is
-   begin
-      return Delete_Main_Window_Cb(Gtk_Widget(Self), null);
-   end Quit_Button_Cb;
+   is ( Delete_Main_Window_Cb(Gtk_Widget(Self), null) );
 
    function Quit_Button_Mnemonic_Cb
       (Self: access Glib.Object.GObject_Record'Class;
        Arg : Boolean
       ) return Boolean
-   is
-      Dummy: Boolean := Delete_Main_Window_Cb(Gtk_Widget(Self), null);
-   begin
-      return False;
-   end Quit_Button_Mnemonic_Cb;
+   is ( Delete_Main_Window_Cb(Gtk_Widget(Self), null) );
 
    function Window_Key_Release_Cb
      (Self  : access Glib.Object.GObject_Record'Class;
