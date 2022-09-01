@@ -49,6 +49,7 @@ I even ended up contributing quite a bit of material based on this to the
   - Turns out this is due to GTK's unintuitive `GTK_Attach_Options`.
     I managed to get it to hit the edges (see commented code)
     but it's not pretty.
+- [x] Fix the bug where closing the window raises GTK alarms.
 - [x] When editing is complete, enable automatic navigation to next cell.
 
 ## See also

@@ -88,6 +88,9 @@ procedure Main is
    Add_Button, Del_Button, Save_Button, Quit_Button: Gtk_Button;
    -- button whose name implies its meaning
 
+   Window_And_View: Shutdown_GObject;
+   -- for tracking the window and the view
+
    -- the quotes
 
    subtype Fields is Quote_Structure.Fields;
@@ -229,6 +232,9 @@ begin
    Gtk_New(List_Store, ( 0..3 => Glib.GType_String ));
    Scroll_Box.Add(Tree_View);
 
+   -- set up for shut down
+   Window_And_View := Initialize(Win, Tree_View);
+
    -- connect the buttons with their callbacks
    -- the `Slot` is the item passed to the `Call` as `Self`
    Save_Button.On_Button_Release_Event
@@ -257,15 +263,15 @@ begin
        After => False);
    Quit_Button.On_Button_Release_Event
       (Call  => Quit_Button_Cb'Access,
-       Slot  => Win,
+       Slot  => Window_And_View,
        After => False);
    Quit_Button.On_Mnemonic_Activate
       (Call  => Quit_Button_Mnemonic_Cb'Access,
-       Slot  => Tree_View,
+       Slot  => Window_And_View,
        After => False);
    Win.On_Key_Release_Event
       (Call  => Window_Key_Release_Cb'Access,
-       Slot  => Tree_View,
+       Slot  => Window_And_View,
        After => False);
 
    -- fill `List_Store` with the quote data
@@ -325,7 +331,7 @@ begin
    end loop;
 
    -- Stop the Gtk process when closing the window
-   Win.On_Delete_Event (Delete_Main_Window_Cb'Unrestricted_Access);
+   Win.On_Delete_Event (Delete_Main_Window_Cb'Unrestricted_Access, Window_And_View);
 
    --  Show the window and present it
    Win.Show_All;

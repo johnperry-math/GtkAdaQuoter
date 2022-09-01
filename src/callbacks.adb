@@ -33,8 +33,19 @@ with Quote_Structure; use all type Quote_Structure.Fields;
 
 package body Callbacks is
 
+   function Initialize
+      (Window: Gtk_Window; Tree_View: Gtk_Tree_View) return Shutdown_GObject
+   is
+      Object: Shutdown_GObject := new Shutdown_GObject_Record;
+   begin
+      Initialize(GObject(Object));
+      Object.Window := Window;
+      Object.Tree_View := Tree_View;
+      return Object;
+   end Initialize;
+
    function Delete_Main_Window_Cb
-      (Self  : access Gtk_Widget_Record'Class;
+      (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event)
        return Boolean
    -- closes the main window
@@ -51,7 +62,9 @@ package body Callbacks is
          & Configuration_File;
       Config_File     : Tio.File_Type;
 
-      Tree_View: Gtk_Tree_View := Gtk_Tree_View(Self);
+      Window_And_View: Shutdown_GObject := Shutdown_GObject(Self);
+
+      Tree_View: Gtk_Tree_View := Window_And_View.Tree_View;
       Author_Column: Gtk_Tree_View_Column
          := Tree_View.Get_Column(Fields'Pos(Author));
       Speaker_Column: Gtk_Tree_View_Column
@@ -382,8 +395,9 @@ package body Callbacks is
    is
       Store : Gtk_List_Store;
       Iter  : Gtk_Tree_Iter;
+      Window_And_View: Shutdown_GObject := Shutdown_GObject(Self);
    begin
-      Get_Store_And_Iter(Gtk_Tree_View(Self), Store, Iter);
+      Get_Store_And_Iter(Window_And_View.Tree_View, Store, Iter);
       Store.Remove(Iter);
       return False;
    end Del_Quote_Mnemonic_Cb;
@@ -392,13 +406,13 @@ package body Callbacks is
       (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event_Button
       ) return Boolean
-   is ( Delete_Main_Window_Cb(Gtk_Widget(Self), null) );
+   is ( Delete_Main_Window_Cb(Self, null) );
 
    function Quit_Button_Mnemonic_Cb
       (Self: access Glib.Object.GObject_Record'Class;
        Arg : Boolean
       ) return Boolean
-   is ( Delete_Main_Window_Cb(Gtk_Widget(Self), null) );
+   is ( Delete_Main_Window_Cb(Self, null) );
 
    function Window_Key_Release_Cb
      (Self  : access Glib.Object.GObject_Record'Class;
@@ -411,10 +425,11 @@ package body Callbacks is
       package Key_Syms renames Gdk.Types.Keysyms;
       Modifier: Key_Types.Gdk_Modifier_Type := Event.State;
       Keyval: Key_Types.Gdk_Key_Type := Event.Keyval;
+      Window: Gtk_Window := Shutdown_GObject(Self).Window;
    begin
       if Modifier = Key_Types.Control_Mask and
          ( Keyval = Key_Syms.GDK_LC_Q or Keyval = Key_Syms.GDK_LC_W) then
-         return Delete_Main_Window_Cb(Gtk_Widget(Self), null);
+         return Delete_Main_Window_Cb(Self, null);
       else
          return False;
       end if;

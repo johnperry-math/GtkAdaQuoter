@@ -20,8 +20,10 @@ with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.List_Store;         use Gtk.List_Store;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
 
 -- Ada packages
 with Ada.Containers;
@@ -36,6 +38,7 @@ package Callbacks is
 -- Callbacks and other utility functions for the UI elements.
 
    Configuration_File: constant String := ".gtkadaquoter_cfg";
+   -- filename for the configuration file
 
    Field_Names: array (Fields) of Ada.Strings.Unbounded.Unbounded_String
       := (To_Unbounded_String("Author"),
@@ -45,10 +48,19 @@ package Callbacks is
          );
    -- for easily mapping the fields to strings in the UI
 
+   type Shutdown_GObject_Record is new GObject_Record with record
+      Window: GTK_Window;
+      Tree_View: Gtk_Tree_View;
+   end record;
 
+   type Shutdown_GObject is access all Shutdown_GObject_Record;
+   -- used to track main window and tree view
+
+   function Initialize
+      (Window: Gtk_Window; Tree_View: Gtk_Tree_View) return Shutdown_GObject;
 
    function Delete_Main_Window_Cb
-      (Self  : access Gtk_Widget_Record'Class;
+      (Self  : access Glib.Object.GObject_Record'Class;
        Event : Gdk.Event.Gdk_Event)
        return Boolean;
    -- Callback for when the user attmpts to close the main window.
