@@ -48,16 +48,22 @@ package Callbacks is
          );
    -- for easily mapping the fields to strings in the UI
 
+   type Column_Renderer_Array is array(Fields) of Gtk_Cell_Renderer_Text;
+
    type Shutdown_GObject_Record is new GObject_Record with record
       Window: GTK_Window;
       Tree_View: Gtk_Tree_View;
+      Column_Renderers: Column_Renderer_Array;
    end record;
 
    type Shutdown_GObject is access all Shutdown_GObject_Record;
    -- used to track main window and tree view
 
    function Initialize
-      (Window: Gtk_Window; Tree_View: Gtk_Tree_View) return Shutdown_GObject;
+      (Window   : Gtk_Window;
+       Tree_View: Gtk_Tree_View;
+       Renderers: Column_Renderer_Array
+      ) return Shutdown_GObject;
 
    function Delete_Main_Window_Cb
       (Self  : access Glib.Object.GObject_Record'Class;

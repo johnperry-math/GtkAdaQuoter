@@ -98,6 +98,7 @@ procedure Main is
    use all type Quote_Structure.Quote_Vector;
 
    Column_Widths: array(Fields) of Integer := (others => 0);
+   Renderers: Column_Renderer_Array;
 
    All_Quotes: Quote_Structure.Quote_Vector;
    -- all quotes read from the resource file
@@ -105,41 +106,49 @@ procedure Main is
    Dir_Sep   : Character := GNAT.OS_Lib.Directory_Separator;
    -- used to open the main directory
 
-   procedure Setup_Column(Field: Fields) is
+   function Setup_Columns return Column_Renderer_Array is
    -- title the columns and make them editable
 
       use all type Glib.Gint;
 
       Column_No: Glib.Gint;
       Column   : Gtk_Tree_View_Column;
-      Text     : Gtk_Cell_Renderer_Text;
+      Result   : Column_Renderer_Array;
 
    begin
 
-      -- column text
-      Gtk_New(Text);
-      Text.On_Edited(Editing_Done'Access, Slot => Tree_View);
-      Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
+      for Field in Fields loop
+         declare Text: Gtk_Cell_Renderer_Text;
+         begin
+            -- column text
+            Gtk_New(Text);
+            Set_Property(Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
 
-      -- column: title, pack text into it, attribute, resizable, sortable
-      Gtk_New(Column);
-      Column.Set_Title(To_String(Field_Names(Field)));
-      Column.Pack_Start(Text, True);
-      Column.Add_Attribute(Text, "text", Fields'Pos(Field));
-      Column.Set_Resizable(True);
-      Column.Set_Sort_Column_Id(Fields'Pos(Field));
-      if Column_Widths(Field) /= 0 then
-         Column.Set_Fixed_Width(Glib.Gint(Column_Widths(Field)));
-      end if;
+            -- column: title, pack text into it, attribute, resizable, sortable
+            Gtk_New(Column);
+            Column.Set_Title(To_String(Field_Names(Field)));
+            Column.Pack_Start(Text, True);
+            Column.Add_Attribute(Text, "text", Fields'Pos(Field));
+            Column.Set_Resizable(True);
+            Column.Set_Sort_Column_Id(Fields'Pos(Field));
+            if Column_Widths(Field) /= 0 then
+               Column.Set_Fixed_Width(Glib.Gint(Column_Widths(Field)));
+            end if;
 
-      -- finally, add it to the tree view
-      -- interestingly, column number might differ from sort id above
-      Column_No := Tree_View.Append_Column(Column);
+            -- finally, add it to the tree view
+            -- interestingly, column number might differ from sort id above
+            Column_No := Tree_View.Append_Column(Column);
+            Result(Field) := Text;
+         end;
+      end loop;
 
-   end Setup_Column;
+      return Result;
+
+   end Setup_Columns;
 
    Home_Path : String := GnatColl.VFS.Get_Home_Directory.
       Display_Full_Name(Normalize => True) & Dir_Sep;
+   Read_Result: GnatColl.JSON.Read_Result;
 
 begin
 
@@ -160,7 +169,6 @@ begin
       Config_Path: String := Home_Path & Configuration_File;
       Config_File: Tio.File_Type;
       Data: GnatColl.JSON.JSON_Value;
-      Read_Result: GnatColl.JSON.Read_Result;
       All_Lines: Unbounded_String;
    begin
       Tio.Open(Config_File, Tio.In_File, Config_Path);
@@ -192,7 +200,19 @@ begin
    Screen := Win.Get_Screen;
    Monitor_Number := Screen.Get_Monitor_At_Window(Screen.Get_Active_Window);
    Screen.Get_Monitor_Geometry(Monitor_Number, Geometry);
-   Win.Set_Default_Size (Geometry.Width, Geometry.Height);
+   declare
+      subtype Gint is Glib.Gint;
+      Width: Integer := Integer(Geometry.Width);
+      Height: Integer := Integer(Geometry.Height);
+   begin
+      if Read_Result.Value.Has_Field("width") then
+         Width := Read_Result.Value.Get("width");
+      end if;
+      if Read_Result.Value.Has_Field("height") then
+         Height := Read_Result.Value.Get("height");
+      end if;
+      Win.Set_Default_Size(Gint(Width), Gint(Height));
+   end;
 
    -- Create a box for vertical organization of the window contents:
    -- 10 rows, 1 column, different-sized cells
@@ -231,48 +251,6 @@ begin
    Gtk_New(Tree_View);
    Gtk_New(List_Store, ( 0..3 => Glib.GType_String ));
    Scroll_Box.Add(Tree_View);
-
-   -- set up for shut down
-   Window_And_View := Initialize(Win, Tree_View);
-
-   -- connect the buttons with their callbacks
-   -- the `Slot` is the item passed to the `Call` as `Self`
-   Save_Button.On_Button_Release_Event
-      (Call  => Save_Quotes_Cb'Access,
-       Slot  => List_Store,
-       After => False);
-   Save_Button.On_Mnemonic_Activate
-      (Call  => Save_Quotes_Mnemonic_Cb'Access,
-       Slot  => List_Store,
-       After => False);
-   Add_Button.On_Button_Release_Event
-      (Call  => Add_Quote_Cb'Access,
-       Slot  => Tree_View,
-       After => False);
-   Add_Button.On_Mnemonic_Activate
-      (Call  => Add_Quote_Mnemonic_Cb'Access,
-       Slot  => Tree_View,
-       After => False);
-   Del_Button.On_Button_Release_Event
-      (Call  => Del_Quote_Cb'Access,
-       Slot  => Tree_View,
-       After => False);
-   Del_Button.On_Mnemonic_Activate
-      (Call  => Del_Quote_Mnemonic_Cb'Access,
-       Slot  => Tree_View,
-       After => False);
-   Quit_Button.On_Button_Release_Event
-      (Call  => Quit_Button_Cb'Access,
-       Slot  => Window_And_View,
-       After => False);
-   Quit_Button.On_Mnemonic_Activate
-      (Call  => Quit_Button_Mnemonic_Cb'Access,
-       Slot  => Window_And_View,
-       After => False);
-   Win.On_Key_Release_Event
-      (Call  => Window_Key_Release_Cb'Access,
-       Slot  => Window_And_View,
-       After => False);
 
    -- fill `List_Store` with the quote data
 
@@ -326,9 +304,52 @@ begin
 
    -- title the columns and make them editable
 
-   for Field in Fields loop
-      Setup_Column(Field);
+   Renderers := Setup_Columns;
+   Window_And_View := Initialize(Win, Tree_View, Renderers);
+   for Renderer of Renderers loop
+      Renderer.On_Edited(Editing_Done'Access, Slot => Window_And_View);
    end loop;
+
+   -- CALLBACKS
+
+   -- connect the buttons with their callbacks
+   -- the `Slot` is the item passed to the `Call` as `Self`
+   Save_Button.On_Button_Release_Event
+      (Call  => Save_Quotes_Cb'Access,
+       Slot  => List_Store,
+       After => False);
+   Save_Button.On_Mnemonic_Activate
+      (Call  => Save_Quotes_Mnemonic_Cb'Access,
+       Slot  => List_Store,
+       After => False);
+   Add_Button.On_Button_Release_Event
+      (Call  => Add_Quote_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Add_Button.On_Mnemonic_Activate
+      (Call  => Add_Quote_Mnemonic_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Del_Button.On_Button_Release_Event
+      (Call  => Del_Quote_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Del_Button.On_Mnemonic_Activate
+      (Call  => Del_Quote_Mnemonic_Cb'Access,
+       Slot  => Tree_View,
+       After => False);
+   Quit_Button.On_Button_Release_Event
+      (Call  => Quit_Button_Cb'Access,
+       Slot  => Window_And_View,
+       After => False);
+   Quit_Button.On_Mnemonic_Activate
+      (Call  => Quit_Button_Mnemonic_Cb'Access,
+       Slot  => Window_And_View,
+       After => False);
+   Win.On_Key_Release_Event
+      (Call  => Window_Key_Release_Cb'Access,
+       Slot  => Window_And_View,
+       After => False);
 
    -- Stop the Gtk process when closing the window
    Win.On_Delete_Event (Delete_Main_Window_Cb'Unrestricted_Access, Window_And_View);
@@ -336,6 +357,20 @@ begin
    --  Show the window and present it
    Win.Show_All;
    Win.Present;
+   declare
+      subtype Gint is Glib.Gint;
+      Corner_X: Integer := 0;
+      Corner_Y: Integer := 0;
+   begin
+      if Read_Result.Value.Has_Field("corner_x") then
+         Corner_X := Read_Result.Value.Get("corner_x");
+      end if;
+      if Read_Result.Value.Has_Field("corner_y") then
+         Corner_Y := Read_Result.Value.Get("corner_y");
+      end if;
+      Win.Move(Gint(Corner_X), Gint(Corner_Y));
+   end;
+   Tree_View.Grab_Focus;
 
    --  Start the Gtk+ main loop
    Gtk.Main.Main;

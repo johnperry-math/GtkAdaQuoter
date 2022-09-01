@@ -11,6 +11,7 @@ with Gdk.Types;
 with Gdk.Types.Keysyms;
 
 -- Gtk packages
+with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
@@ -34,13 +35,17 @@ with Quote_Structure; use all type Quote_Structure.Fields;
 package body Callbacks is
 
    function Initialize
-      (Window: Gtk_Window; Tree_View: Gtk_Tree_View) return Shutdown_GObject
+      (Window   : Gtk_Window;
+       Tree_View: Gtk_Tree_View;
+       Renderers: Column_Renderer_Array
+      ) return Shutdown_GObject
    is
       Object: Shutdown_GObject := new Shutdown_GObject_Record;
    begin
       Initialize(GObject(Object));
       Object.Window := Window;
       Object.Tree_View := Tree_View;
+      Object.Column_Renderers := Renderers;
       return Object;
    end Initialize;
 
@@ -77,9 +82,9 @@ package body Callbacks is
       Output: JSON_Value;
 
       procedure Set_Field_Integer
-     (Val        : JSON_Value;
-      Field_Name : UTF8_String;
-      Field      : Integer) renames GnatColl.JSON.Set_Field;
+         (Val        : JSON_Value;
+          Field_Name : UTF8_String;
+          Field      : Integer) renames GnatColl.JSON.Set_Field;
 
    begin
 
@@ -93,6 +98,18 @@ package body Callbacks is
          (To_String(Field_Names(Speaker)), Integer(Speaker_Column.Get_Width));
       Output.Set_Field
          (To_String(Field_Names(Quotation)),Integer(Quotation_Column.Get_Width));
+
+      declare
+         Corner_X, Corner_Y, Width, Height: Glib.Gint;
+         Window: Gtk_Window := Window_And_View.Window;
+      begin
+         Window.Get_Size(Width, Height);
+         Window.Get_Position(Corner_X, Corner_Y);
+         Output.Set_Field("width", Integer(Width));
+         Output.Set_Field("height", Integer(Height));
+         Output.Set_Field("corner_x", Integer(Corner_X));
+         Output.Set_Field("corner_y", Integer(Corner_Y));
+      end;
 
       Tio.Create(Config_File, Name => Config_Filename);
       Tio.Put(Config_File, GnatColl.JSON.Write(Output, False));
@@ -111,7 +128,7 @@ package body Callbacks is
    is
 
       -- we pass in the tree view as the object
-      Tree_View  : Gtk_Tree_View := Gtk_Tree_View(Self);
+      Tree_View  : Gtk_Tree_View := Shutdown_GObject(Self).Tree_View;
 
       -- get the tree model, which is a list store;
       -- To_Object converts from the Interface type to the List_Store type
@@ -152,6 +169,18 @@ package body Callbacks is
 
       Tree_View.Set_Cursor
          (Tree_Path, Tree_View.Get_Column(Column_Id), True);
+      Tree_View.Grab_Focus;
+
+      --  Get_Cursor(Tree_View, Tree_Path, Tree_Column);
+      --  declare
+      --     Renderer: Gtk_Cell_Renderer_Text := Renderers(Fields'Val(Column_Id));
+      --     Color   : Gdk_RGBA;
+      --     Parsed  : Boolean;
+      --  begin
+      --     Parse(Color, "rgba(255,0,0,0.5)", Parsed);
+      --     Set_Property(Renderer, Cell_Background_Rgba_Property, Color);
+      --  end;
+
       Gtk.Tree_Model.Path_Free(Tree_Path);
 
    end Editing_Done;
@@ -434,6 +463,5 @@ package body Callbacks is
          return False;
       end if;
    end Window_Key_Release_Cb;
-
 
 end Callbacks;

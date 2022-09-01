@@ -18,15 +18,6 @@ I even ended up contributing quite a bit of material based on this to the
 
 ## To do
 
-(_maybe_)
-
-- [ ] Enable ~a~ the configuration file to remember:
-
-     - [ ] window dimensions;
-     - [ ] previously-used paths for opening, saving.
-
-- [ ] Fix the bug that arises when tabbing away from an active but un-edited cell.
-
 ### Done!
 - [x] Add a file chooser dialog for opening the file.
 - [x] Add a "quit" button with mnemonic.
@@ -39,7 +30,10 @@ I even ended up contributing quite a bit of material based on this to the
 - [x] ~~Better default column widths.~~ OBE by configuration file
 - [x] Enable a configuration file to remember:
 
-     - [x] column widths.
+     - [x] column widths;
+     - [x] ~~previously-used paths for opening, saving;~~
+       - Decided to rely on usability of GTK's file chooser.
+     - [x] window dimensions.
 
 - [x] Enable a Ctrl-Q shortcut.
 - [x] Enable a Ctrl-W shortcut.
@@ -49,6 +43,10 @@ I even ended up contributing quite a bit of material based on this to the
   - Turns out this is due to GTK's unintuitive `GTK_Attach_Options`.
     I managed to get it to hit the edges (see commented code)
     but it's not pretty.
+- [x] Fix the bug that arises when tabbing away from an active but un-edited cell.
+  - Turns out GTK **really** wants the `GTK_Tree_View` to grab focus
+    after setting the focus on a particular cell, and for some reason
+    the `Tab` button doesn't do this properly.
 - [x] Fix the bug where closing the window raises GTK alarms.
 - [x] When editing is complete, enable automatic navigation to next cell.
 
