@@ -18,6 +18,10 @@ I even ended up contributing quite a bit of material based on this to the
 
 ## To do
 
+- [ ] Figure out how to wrap quotation text while editing the text.
+- [ ] Improve Unicode character handling with more points,
+  _or_ bring in an external library.
+
 ### Done!
 - [x] Add a file chooser dialog for opening the file.
 - [x] Add a "quit" button with mnemonic.
@@ -38,6 +42,7 @@ I even ended up contributing quite a bit of material based on this to the
 - [x] Enable a Ctrl-Q shortcut.
 - [x] Enable a Ctrl-W shortcut.
 - [x] Enable drag-and-drop reordering of quotes.
+- [x] Enable Unicode character handling for the characters I use most.
 - [x] ~~Fix button alignment.~~
       Figure out why the button bar does not expand to window edges.
   - Turns out this is due to GTK's unintuitive `GTK_Attach_Options`.
@@ -49,6 +54,7 @@ I even ended up contributing quite a bit of material based on this to the
     the `Tab` button doesn't do this properly.
 - [x] Fix the bug where closing the window raises GTK alarms.
 - [x] When editing is complete, enable automatic navigation to next cell.
+- [x] Wrap quotation text.
 
 ## See also
 

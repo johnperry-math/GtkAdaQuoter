@@ -119,6 +119,79 @@ package body Callbacks is
       return False;
    end Delete_Main_Window_Cb;
 
+   function Reformat(Text: UTF8_String) return UTF8_String is
+      package Unbounded renames Ada.Strings.Unbounded;
+      subtype Unbounded_String is Unbounded.Unbounded_String;
+      Result: Unbounded_String := To_Unbounded_String("");
+      Pos   : Natural := 1;
+      Char  : Character;
+   begin
+      while Pos <= Text'Length loop
+         Char := Text(Pos);
+         if Character'Pos(Char) >= 224 then -- unicode
+            declare
+               First_Code         : Integer
+                  := Character'Pos(Char) - 224;
+               First_Continuation : Integer
+                  := Character'Pos(Text(Pos + 1)) - 128;
+               Second_Continuation: Integer
+                  := Character'Pos(Text(Pos + 2)) - 128;
+               Third_Lead         : Integer := First_Continuation mod 4;
+               Second_Code        : Integer := First_Continuation / 4;
+               Third_Trail        : Integer := Second_Continuation / 16;
+               Third_Code         : Integer := Third_Lead * 4 + Third_Trail;
+               Fourth_Code        : Integer := Second_Continuation mod 16;
+               Value              : Integer
+                  := First_Code * 16 * 16 * 16
+                     + Second_Code * 16 * 16
+                                      + Third_Code * 16
+                                         + Fourth_Code;
+            begin
+               case Value is
+                  when 8217 => Result := Result & "’";
+                  when 8211 => Result := Result & "–";
+                  when 8212 => Result := Result & "—";
+                  when 8220 => Result := Result & "“";
+                  when 8221 => Result := Result & "”";
+                  when 8230 => Result := Result & "…";
+                  when 8216 => Result := Result & "‘";
+                  when others => Result := Result & "||Unknown Unicode||";
+               end case;
+            end;
+            Pos := Pos + 2;
+         elsif Char = '&' then
+            declare New_String: Unbounded_String := To_Unbounded_String("&");
+            begin
+               loop
+                  Pos := Pos + 1;
+                  exit when Pos > Text'Length;
+                  declare Inside_Char: String := Text(Pos)'Image;
+                  begin
+                     New_String := New_String & Inside_Char(2);
+                  end;
+                  exit when Text(Pos) = ';';
+               end loop;
+               declare Compare_String: String := To_String(New_String);
+               begin
+                  if Compare_String = "&amp;" then Result := Result & "&";
+                  elsif Compare_String = "&rsquo;" then Result := Result & "’";
+                  elsif Compare_String = "&mdash;" then Result := Result & "—";
+                  elsif Compare_String = "&ndash;" then Result := Result & "–";
+                  elsif Compare_String = "&ldquo;" then Result := Result & "“";
+                  elsif Compare_String = "&rdquo;" then Result := Result & "”";
+                  elsif Compare_String = "&hellip;" then Result := Result & "…";
+                  elsif Compare_String = "&lsquo;" then Result := Result & "‘";
+                  else Result := Result & Compare_String;
+                  end if;
+               end;
+            end;
+         else Result := Result & Character'Image(Char)(2);
+         end if;
+         Pos := Pos + 1;
+      end loop;
+      return To_String(Result);
+   end Reformat;
+
    procedure Editing_Done
       ( Self     : access Glib.Object.GObject_Record'Class;
         Path     : UTF8_String;
@@ -136,14 +209,15 @@ package body Callbacks is
       Store      : Gtk_List_Store := Gtk_List_Store( To_Object(Model) );
 
       -- find the row
-      Iter       : Gtk_Tree_Iter := Get_Iter_From_String(Model, Path);
+      Iter       : Gtk_Tree_Iter  := Get_Iter_From_String(Model, Path);
 
       -- to fill in with statements
-      Cell_Value : Glib.Values.GValue;
-      Tree_Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-      Tree_Column: Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      Column_Id  : Glib.Gint;
-      Row_Id     : Glib.Gint;
+      Cell_Value      : Glib.Values.GValue;
+      Tree_Path       : Gtk.Tree_Model.Gtk_Tree_Path;
+      Tree_Column     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Column_Id       : Glib.Gint;
+      Row_Id          : Glib.Gint;
+      Reformatted_Text: UTF8_String := Reformat(New_Text);
 
       subtype Fields is Quote_Structure.Fields;
 
@@ -151,7 +225,7 @@ package body Callbacks is
 
       -- initialize cell to hold a string, then put the desired string into it
       Glib.Values.Init(Cell_Value, Glib.GType_String);
-      Glib.Values.Set_String(Cell_Value, New_Text);
+      Glib.Values.Set_String(Cell_Value, Reformatted_Text);
 
       -- find the active cell in the tree view
       -- (which should be the one we want to update)

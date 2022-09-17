@@ -34,6 +34,7 @@ with Gtk.Tree_View;          use Gtk.Tree_View;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
+with Pango.Enums;            use Pango.Enums;
 
 -- Glib packages
 with Glib;            use all type Glib.Gchar_Array;
@@ -138,6 +139,28 @@ procedure Main is
             -- finally, add it to the tree view
             -- interestingly, column number might differ from sort id above
             Column_No := Tree_View.Append_Column(Column);
+            Set_Property(
+                         Column,
+                         Gtk.Tree_View_Column.Max_Width_Property,
+                         Geometry.Width / 3
+                        );
+            --  Set_Property(
+            --               Column,
+            --               Gtk.Tree_View_Column.Max_Width_Property,
+            --               Geometry.Width / 10
+            --              );
+            if Field = Quotation then
+               Set_Property(Text,
+                            Gtk.Cell_Renderer_Text.Wrap_Width_Property,
+                            Geometry.Width / 3
+                           );
+               Set_Property(Text,
+                            Gtk.Cell_Renderer_Text.Wrap_Mode_Property,
+                            Pango.Enums.Pango_Wrap_Word
+                           );
+            end if;
+            --  Column.Set_Sizing
+            --        (Gtk.Tree_View_Column.Tree_View_Column_Autosize);
             Result(Field) := Text;
          end;
       end loop;
