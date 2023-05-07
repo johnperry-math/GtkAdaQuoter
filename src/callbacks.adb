@@ -498,9 +498,8 @@ package body Callbacks is
    is
       Store : Gtk_List_Store;
       Iter  : Gtk_Tree_Iter;
-      Window_And_View: Shutdown_GObject := Shutdown_GObject(Self);
    begin
-      Get_Store_And_Iter(Window_And_View.Tree_View, Store, Iter);
+      Get_Store_And_Iter (Gtk_Tree_View(Self), Store, Iter);
       Store.Remove(Iter);
       return False;
    end Del_Quote_Mnemonic_Cb;

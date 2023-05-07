@@ -1,0 +1,12 @@
+name = "gtkadaquoter"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["John Perry"]
+maintainers = ["John Perry <devotus@yahoo.com>"]
+maintainers-logins = ["johnperry-math"]
+licenses = "MIT OR Apache-2.0"
+website = ""
+tags = []
+
+executables = ["gtkadaquoter"]
