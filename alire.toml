@@ -10,3 +10,8 @@ website = ""
 tags = []
 
 executables = ["gtkadaquoter"]
+[[depends-on]]
+gtkada = "^23.0.0"
+
+[[depends-on]]
+gnatcoll = "^24.0.0"
